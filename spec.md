@@ -1,29 +1,29 @@
-SAFE‑MCP Static Code Analysis – MCP Integration Spec
+SAF‑MCP Static Code Analysis – MCP Integration Spec
 
 1. Overview
 
-This document specifies a system that performs SAFE‑MCP–aware static-ish code analysis for a source repository, using LLM code models under the hood, and exposes that capability via an MCP server.
+This document specifies a system that performs SAF‑MCP–aware static-ish code analysis for a source repository, using LLM code models under the hood, and exposes that capability via an MCP server.
 
 The system has three primary layers:
-	1.	SAFE‑MCP Analysis Engine (library + CLI) – core logic, technique semantics, repo walking, chunking, and aggregation.
+	1.	SAF‑MCP Analysis Engine (library + CLI) – core logic, technique semantics, repo walking, chunking, and aggregation.
 	2.	Model Adapter Layer – abstraction over one or more code‑capable LLM providers (OpenAI, Anthropic, local models).
-	3.	MCP Server (safe-mcp-analyzer) – exposes analysis capabilities as tools for MCP‑aware clients (ChatGPT, Claude Desktop, IDE agents).
+	3.	MCP Server (saf-mcp-analyzer) – exposes analysis capabilities as tools for MCP‑aware clients (ChatGPT, Claude Desktop, IDE agents).
 
 The analysis engine is the “source of truth” and may be used independently in CI, Git hooks, etc. MCP is a UX/integration surface, not the enforcement point.
 
 ⸻
 
 2. Goals
-	1.	Provide a reusable, provider‑agnostic SAFE‑MCP analysis engine:
+	1.	Provide a reusable, provider‑agnostic SAF‑MCP analysis engine:
 	•	Input: technique ID (e.g., T1101), repo path, config.
 	•	Output: structured findings with status, evidence, line numbers, and mitigation mapping.
 	2.	Expose this engine via an MCP server with a small, stable tool surface:
-	•	list_safe_mcp_techniques
+	•	list_saf_mcp_techniques
 	•	scan_technique
 	•	explain_finding
 	•	(Optional v2) propose_mitigation_patch
 	3.	Clean separation of concerns:
-	•	SAFE‑MCP semantics encoded once in technique specs.
+	•	SAF‑MCP semantics encoded once in technique specs.
 	•	Models treated as pluggable engines.
 	•	MCP only handles transport and ergonomics.
 	4.	Support usage from:
@@ -35,7 +35,7 @@ The analysis engine is the “source of truth” and may be used independently i
 
 3. Non‑Goals
 	•	Formal, sound static analysis (no proofs of absence of vulnerabilities).
-	•	Full SAFE‑MCP specification implementation; only the subset needed for code analysis.
+	•	Full SAF‑MCP specification implementation; only the subset needed for code analysis.
 	•	UI frontend beyond what MCP clients provide.
 	•	Policy decision/approval workflows (out of scope for this phase).
 
@@ -45,16 +45,16 @@ The analysis engine is the “source of truth” and may be used independently i
 
 4.1 Components
 	•	Technique Spec Store
-	•	Machine‑readable definitions of SAFE‑MCP techniques, mitigations, and code signals (schema‑validated).
-	•	SAFE‑MCP Analysis Engine (Library + CLI)
-	•	Loads technique specs plus SAFE‑MCP corpus (READMEs, prioritized list, mitigations).
+	•	Machine‑readable definitions of SAF‑MCP techniques, mitigations, and code signals (schema‑validated).
+	•	SAF‑MCP Analysis Engine (Library + CLI)
+	•	Loads technique specs plus SAF‑MCP corpus (READMEs, prioritized list, mitigations).
 	•	Enumerates source/config/docs files with configurable globs/exts/size filters (docs allowed by default; 0 disables size checks).
 	•	Runs a hybrid rules + LLM pipeline with per‑chunk prompts that include file path/extension/line range and README excerpt.
 	•	Aggregates findings into a standardized AnalysisResult with mandatory evidence.
 	•	Model Adapter Layer
 	•	Generic CodeModel interface.
 	•	Provider‑specific implementations (OpenAI, Anthropic, local) and retry wrapper; temperature pinned to 0.
-	•	MCP Server (safe-mcp-analyzer)
+	•	MCP Server (saf-mcp-analyzer)
 	•	Implements MCP protocol.
 	•	Exposes tools backed by the analysis engine.
 	•	Translates MCP file handles/workspaces into local paths for the engine.
@@ -65,7 +65,7 @@ The analysis engine is the “source of truth” and may be used independently i
 	3.	Engine:
 	•	Loads technique spec (schema‑validated).
 	•	Loads the technique README (fatal if missing) to supply detailed attack context to the model.
-	•	Loads SAFE‑MCP reference data (prioritized list, mitigation titles) and cross‑checks README vs filesystem.
+	•	Loads SAF‑MCP reference data (prioritized list, mitigation titles) and cross‑checks README vs filesystem.
 	•	Enumerates and filters files (globs/exts/size); docs/manifests allowed unless explicitly excluded.
 	•	Applies fast rules to identify candidate regions.
 	•	Calls one or more LLMs via model adapters on code chunks (path/extension/lines + README excerpt in prompt).
@@ -78,7 +78,7 @@ The analysis engine is the “source of truth” and may be used independently i
 5. Functional Requirements
 
 5.1 Technique Management
-	•	The system must support multiple SAFE‑MCP techniques (e.g., T1101, T2003, …).
+	•	The system must support multiple SAF‑MCP techniques (e.g., T1101, T2003, …).
 	•	Techniques must be defined as machine‑readable specs (YAML/JSON).
 	•	MCP must expose a list of available techniques with metadata (ID, name, severity, short description).
 
@@ -92,7 +92,7 @@ Given:
 The system must:
 	•	Enumerate relevant source/config/docs files based on include/exclude globs/exts and optional max_file_bytes (0 disables size checks; docs/manifests allowed by default).
 	•	Identify candidate code regions via lightweight heuristics/rules.
-	•	Load the technique’s README (safe-mcp/techniques/<ID>/README.md) and feed its guidance into the model prompt for each scan (fatal if missing).
+	•	Load the technique’s README (saf-mcp/techniques/<ID>/README.md) and feed its guidance into the model prompt for each scan (fatal if missing).
 	•	Run LLM analysis on those regions using one or more CodeModel implementations (temperature pinned to 0; prompt includes file path/extension/line range).
 	•	Optionally run a second‑pass LLM review to filter findings; review failures must not drop primary findings.
 	•	Return, for that technique:
@@ -184,12 +184,12 @@ output_schema:
 	•	Engine must be able to:
 	•	Load all technique specs on startup.
 	•	Validate them against a schema (reject or warn on invalid).
-	•	MCP list_safe_mcp_techniques must read from this store, not hard‑code techniques.
+	•	MCP list_saf_mcp_techniques must read from this store, not hard‑code techniques.
 	•	Analysis must use the detailed technique reports (per-technique README.md) as part of the LLM prompt context when scanning, so findings reflect technique-specific guidance.
 
 ⸻
 
-6.2 SAFE‑MCP Analysis Engine
+6.2 SAF‑MCP Analysis Engine
 
 6.2.1 Public Interface (Library)
 Language‑agnostic pseudo‑interface:
@@ -225,18 +225,18 @@ The engine MUST:
   • Record which artifacts were consulted (files, technique README) so the result is auditable.
 
 6.2.2 CLI
-Binary name: safe-mcp-scan
+Binary name: saf-mcp-scan
 
 Examples:
 
 # Full repo for one technique
-safe-mcp-scan T1101 /path/to/repo --json
+saf-mcp-scan T1101 /path/to/repo --json
 
 # Changed-only scan vs origin/main
-safe-mcp-scan T1101 /path/to/repo --json --scope git_diff --base origin/main
+saf-mcp-scan T1101 /path/to/repo --json --scope git_diff --base origin/main
 
 # Single-file scan
-safe-mcp-scan T1101 /path/to/repo --file src/auth/mcp_proxy.rs --json
+saf-mcp-scan T1101 /path/to/repo --file src/auth/mcp_proxy.rs --json
 
 Minimal CLI flags:
 	•	--json (output machine‑readable JSON AnalysisResult to stdout).
@@ -391,7 +391,7 @@ Requirements:
 
 ⸻
 
-6.4 MCP Server: safe-mcp-analyzer
+6.4 MCP Server: saf-mcp-analyzer
 
 6.4.1 General
 	•	Implements MCP spec for tools.
@@ -402,13 +402,13 @@ Requirements:
 
 The server should call the engine via library APIs where possible (not spawning separate CLI processes per call, except as a fallback).
 
-6.4.2 Tool: list_safe_mcp_techniques
-Purpose: Enumerate all known SAFE‑MCP techniques.
+6.4.2 Tool: list_saf_mcp_techniques
+Purpose: Enumerate all known SAF‑MCP techniques.
 
 Request:
 
 {
-  "type": "list_safe_mcp_techniques",
+  "type": "list_saf_mcp_techniques",
   "arguments": {}
 }
 
@@ -427,7 +427,7 @@ Response:
 }
 
 6.4.3 Tool: scan_technique
-Purpose: Run a SAFE‑MCP analysis for a technique over a repo.
+Purpose: Run a SAF‑MCP analysis for a technique over a repo.
 
 Request:
 
@@ -650,7 +650,7 @@ redaction_rules:
 	•	Known vulnerable patterns and mitigated patterns.
 	•	Expected AnalysisResult compared with golden JSON.
 	•	MCP tools integration:
-	•	list_safe_mcp_techniques returns correct technique metadata.
+	•	list_saf_mcp_techniques returns correct technique metadata.
 	•	scan_technique returns valid JSON and maps paths correctly from MCP workspace.
 	•	explain_finding returns plausible explanations (manually reviewed during development).
 
@@ -677,11 +677,11 @@ Phase 1 – Core Engine
 	•	Basic rules (where useful).
 	•	CodeModel interface + at least one adapter.
 	•	Aggregation into AnalysisResult.
-	•	Provide safe-mcp-scan CLI for full repo and single‑file scopes.
+	•	Provide saf-mcp-scan CLI for full repo and single‑file scopes.
 
 Phase 2 – MCP Server
-	•	Implement safe-mcp-analyzer MCP server with:
-	•	list_safe_mcp_techniques
+	•	Implement saf-mcp-analyzer MCP server with:
+	•	list_saf_mcp_techniques
 	•	scan_technique
 	•	explain_finding
 	•	Integrate with MCP clients for manual testing.

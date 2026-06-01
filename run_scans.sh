@@ -16,7 +16,7 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCHEMA="${ROOT_DIR}/schemas/technique.schema.json"
-SAFE_MCP="${ROOT_DIR}/safe-mcp"
+SAF_MCP="${ROOT_DIR}/saf-mcp"
 TECH_DIR="${ROOT_DIR}/techniques"
 
 if [[ ! -f "${SCHEMA}" ]]; then
@@ -35,7 +35,7 @@ for yaml in "${TECH_DIR}"/T*.yaml; do
         --provider "${PROVIDER}" \
         --model-name "${MODEL}" \
         --schema "${SCHEMA}" \
-        --safe-mcp "${SAFE_MCP}" \
+        --saf-mcp "${SAF_MCP}" \
         "${base}" \
         --repo "${REPO_PATH}" \
         --json \

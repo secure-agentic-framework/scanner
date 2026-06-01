@@ -21,7 +21,7 @@ pub enum PrioritizedParseError {
 }
 
 /// Parse techniques/prioritized-techniques.md to extract an ordered list of technique ids/names.
-/// Expected rows like: "| SAFE-T1001 | Tool Poisoning Attack |"
+/// Expected rows like: "| SAF-T1001 | Tool Poisoning Attack |"
 pub fn parse_prioritized_techniques<P: AsRef<Path>>(path: P) -> PrioritizedTechniques {
     let path_ref = path.as_ref();
     let content = match fs::read_to_string(path_ref) {
@@ -37,7 +37,7 @@ pub fn parse_prioritized_techniques<P: AsRef<Path>>(path: P) -> PrioritizedTechn
         }
     };
 
-    let row_re = Regex::new(r"(?m)^\|\s*(SAFE-T\d+)\s*\|\s*([^|]+)\|").unwrap();
+    let row_re = Regex::new(r"(?m)^\|\s*(SAF-T\d+)\s*\|\s*([^|]+)\|").unwrap();
     let mut techniques: Vec<TechniqueRef> = Vec::new();
     let mut seen = std::collections::HashSet::new();
     for cap in row_re.captures_iter(&content) {
@@ -75,17 +75,17 @@ mod tests {
         let path = write_prioritized(
             dir.path(),
             r#"| Technique ID | Name |
-| SAFE-T1002 | Supply Chain |
-| SAFE-T1001 | Tool Poisoning |
-| SAFE-T1102 | Prompt Injection |
-| SAFE-T1001 | Duplicate ignored |
+| SAF-T1002 | Supply Chain |
+| SAF-T1001 | Tool Poisoning |
+| SAF-T1102 | Prompt Injection |
+| SAF-T1001 | Duplicate ignored |
 "#,
         );
 
         let result = parse_prioritized_techniques(&path);
         assert!(result.errors.is_empty());
         let ids: Vec<_> = result.techniques.iter().map(|t| t.id.as_str()).collect();
-        assert_eq!(ids, vec!["SAFE-T1002", "SAFE-T1001", "SAFE-T1102"]);
+        assert_eq!(ids, vec!["SAF-T1002", "SAF-T1001", "SAF-T1102"]);
         let names: Vec<_> = result.techniques.iter().map(|t| t.name.as_str()).collect();
         assert_eq!(
             names,

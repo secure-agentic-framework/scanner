@@ -112,8 +112,8 @@ mod tests {
     #[test]
     fn indexes_ids_and_titles() {
         let dir = tempdir().unwrap();
-        let m1 = dir.path().join("SAFE-M-1");
-        let m2 = dir.path().join("SAFE-M-2");
+        let m1 = dir.path().join("SAF-M-1");
+        let m2 = dir.path().join("SAF-M-2");
         fs::create_dir(&m1).unwrap();
         fs::create_dir(&m2).unwrap();
         write_readme(&m1, "Mitigation One");
@@ -122,7 +122,7 @@ mod tests {
         let index = index_mitigations(dir.path());
         assert!(index.errors.is_empty());
         let ids: Vec<_> = index.mitigations.iter().map(|m| m.id.as_str()).collect();
-        assert_eq!(ids, vec!["SAFE-M-1", "SAFE-M-2"]);
+        assert_eq!(ids, vec!["SAF-M-1", "SAF-M-2"]);
         let titles: Vec<_> = index.mitigations.iter().map(|m| m.title.as_str()).collect();
         assert_eq!(titles, vec!["Mitigation One", "Mitigation Two"]);
     }
@@ -130,14 +130,14 @@ mod tests {
     #[test]
     fn reports_missing_readme() {
         let dir = tempdir().unwrap();
-        let m1 = dir.path().join("SAFE-M-1");
+        let m1 = dir.path().join("SAF-M-1");
         fs::create_dir(&m1).unwrap();
         let index = index_mitigations(dir.path());
         assert_eq!(index.mitigations.len(), 0);
         assert_eq!(index.errors.len(), 1);
         match &index.errors[0] {
             MitigationIndexError::FileIo { path, .. } => {
-                assert!(path.ends_with("SAFE-M-1/README.md"));
+                assert!(path.ends_with("SAF-M-1/README.md"));
             }
             _ => panic!("expected file IO error"),
         }

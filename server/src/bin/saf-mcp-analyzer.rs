@@ -1,11 +1,11 @@
-use server::SafeMcpServer;
+use server::SafMcpServer;
 
 use rmcp::{service::QuitReason, transport, ServiceExt};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Expose tools over stdio transport for MCP clients (e.g., Cursor, Claude Desktop).
-    let server = SafeMcpServer::new();
+    let server = SafMcpServer::new();
     let running = server
         .serve(transport::stdio())
         .await

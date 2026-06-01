@@ -36,7 +36,7 @@ pub struct ToolDefinition {
 /// Return MCP Tool descriptors for all supported tools.
 pub fn mcp_tools() -> Vec<Tool> {
     vec![
-        list_safe_mcp_techniques_tool(),
+        list_saf_mcp_techniques_tool(),
         scan_technique_tool(),
         explain_finding_tool(),
         propose_mitigation_patch_tool(),
@@ -92,17 +92,17 @@ fn definition_to_tool(def: ToolDefinition) -> Tool {
 }
 
 #[derive(Clone)]
-pub struct SafeMcpServer {
+pub struct SafMcpServer {
     tool_router: ToolRouter<Self>,
 }
 
-impl Default for SafeMcpServer {
+impl Default for SafMcpServer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl SafeMcpServer {
+impl SafMcpServer {
     pub fn new() -> Self {
         Self {
             tool_router: Self::tool_router(),
@@ -111,11 +111,11 @@ impl SafeMcpServer {
 }
 
 #[tool_router]
-impl SafeMcpServer {
+impl SafMcpServer {
     /// List techniques from validated specs.
     #[tool(
-        name = "list_safe_mcp_techniques",
-        description = "List SAFE-MCP techniques with metadata."
+        name = "list_saf_mcp_techniques",
+        description = "List SAF-MCP techniques with metadata."
     )]
     async fn tool_list(
         &self,
@@ -126,7 +126,7 @@ impl SafeMcpServer {
             .prioritized_path
             .as_ref()
             .map(std::path::PathBuf::from);
-        let items = list_safe_mcp_techniques(
+        let items = list_saf_mcp_techniques(
             &resolve_spec_dir(params.0.spec_dir.as_deref()),
             &resolve_schema_path(params.0.schema_path.as_deref()),
             prioritized.as_deref(),
@@ -138,7 +138,7 @@ impl SafeMcpServer {
     /// Scan a technique against a repo path.
     #[tool(
         name = "scan_technique",
-        description = "Scan a repository for a given SAFE-MCP technique and return structured findings."
+        description = "Scan a repository for a given SAF-MCP technique and return structured findings."
     )]
     async fn tool_scan(
         &self,
@@ -161,7 +161,7 @@ impl SafeMcpServer {
             repo_path: resolve_repo_path(&params.0)?,
             spec_dir: resolve_spec_dir(params.0.spec_dir.as_deref()),
             schema_path: resolve_schema_path(params.0.schema_path.as_deref()),
-            safe_mcp_root: resolve_safe_mcp_root(params.0.safe_mcp_root.as_deref()),
+            saf_mcp_root: resolve_saf_mcp_root(params.0.saf_mcp_root.as_deref()),
             scope,
             max_lines_per_chunk: params.0.max_lines_per_chunk.unwrap_or(200),
             filters,
@@ -210,7 +210,7 @@ impl SafeMcpServer {
 }
 
 #[tool_handler]
-impl ServerHandler for SafeMcpServer {}
+impl ServerHandler for SafMcpServer {}
 
 #[derive(Debug, Clone, serde::Serialize, JsonSchema)]
 pub struct TechniqueListItem {
@@ -220,7 +220,7 @@ pub struct TechniqueListItem {
     pub summary: String,
 }
 
-/// Arguments for list_safe_mcp_techniques handler.
+/// Arguments for list_saf_mcp_techniques handler.
 #[derive(Debug, Clone)]
 pub struct ListArgs {
     pub spec_dir: std::path::PathBuf,
@@ -235,7 +235,7 @@ pub struct ScanArgs {
     pub repo_path: std::path::PathBuf,
     pub spec_dir: std::path::PathBuf,
     pub schema_path: std::path::PathBuf,
-    pub safe_mcp_root: std::path::PathBuf,
+    pub saf_mcp_root: std::path::PathBuf,
     pub scope: engine::chunk::ScopeKind,
     pub max_lines_per_chunk: usize,
     pub filters: Option<engine::chunk::PathFilters>,
@@ -313,17 +313,17 @@ pub fn resolve_workspace_path(
     Ok(final_path)
 }
 
-pub fn list_safe_mcp_techniques_tool() -> ToolDefinition {
+pub fn list_saf_mcp_techniques_tool() -> ToolDefinition {
     ToolDefinition {
-        name: "list_safe_mcp_techniques".into(),
-        description: "List SAFE-MCP techniques with id, name, severity, and summary.".into(),
+        name: "list_saf_mcp_techniques".into(),
+        description: "List SAF-MCP techniques with id, name, severity, and summary.".into(),
         arguments: vec![],
         response: "array of { id, name, severity, summary }".into(),
     }
 }
 
 /// List techniques from validated specs, optionally ordered by prioritized list.
-pub fn list_safe_mcp_techniques(
+pub fn list_saf_mcp_techniques(
     spec_dir: &std::path::Path,
     schema_path: &std::path::Path,
     prioritized_path: Option<&std::path::Path>,
@@ -384,8 +384,8 @@ pub fn list_safe_mcp_techniques(
 }
 
 /// Handler-friendly wrapper that returns technique list items.
-pub fn handle_list_safe_mcp_techniques(args: ListArgs) -> Result<Vec<TechniqueListItem>, String> {
-    list_safe_mcp_techniques(
+pub fn handle_list_saf_mcp_techniques(args: ListArgs) -> Result<Vec<TechniqueListItem>, String> {
+    list_saf_mcp_techniques(
         &args.spec_dir,
         &args.schema_path,
         args.prioritized_path.as_deref(),
@@ -399,10 +399,10 @@ pub async fn handle_scan_technique(
     let cfg = engine::config::load_config(args.config.as_deref())
         .map_err(|e| format!("config error: {e}"))?;
     let model = build_model(&args, &cfg)?;
-    let safe_mcp_techniques = args.safe_mcp_root.join("techniques");
-    let mitigations_dir = args.safe_mcp_root.join("mitigations");
-    let prioritized_path = safe_mcp_techniques.join("prioritized-techniques.md");
-    let readme_path = args.safe_mcp_root.join("README.md");
+    let saf_mcp_techniques = args.saf_mcp_root.join("techniques");
+    let mitigations_dir = args.saf_mcp_root.join("mitigations");
+    let prioritized_path = saf_mcp_techniques.join("prioritized-techniques.md");
+    let readme_path = args.saf_mcp_root.join("README.md");
 
     engine::entrypoint::analyze_technique(
         &model,
@@ -411,7 +411,7 @@ pub async fn handle_scan_technique(
         &args.spec_dir,
         &args.schema_path,
         &mitigations_dir,
-        &safe_mcp_techniques,
+        &saf_mcp_techniques,
         &prioritized_path,
         &readme_path,
         args.scope,
@@ -489,7 +489,7 @@ impl engine::codemodel::CodeModel for ModelBox {
     }
 }
 fn normalize_id(id: &str) -> String {
-    if let Some(stripped) = id.strip_prefix("SAFE-") {
+    if let Some(stripped) = id.strip_prefix("SAF-") {
         stripped.to_string()
     } else {
         id.to_string()
@@ -499,9 +499,9 @@ fn normalize_id(id: &str) -> String {
 pub fn scan_technique_tool() -> ToolDefinition {
     ToolDefinition {
         name: "scan_technique".into(),
-        description: "Scan a repository for a given SAFE-MCP technique.".into(),
+        description: "Scan a repository for a given SAF-MCP technique.".into(),
         arguments: vec![
-            arg("technique_id", true, "Technique id (SAFE-T####).", "string"),
+            arg("technique_id", true, "Technique id (SAF-T####).", "string"),
             arg("path", true, "Repository path to scan.", "string"),
             arg(
                 "scope",
@@ -591,7 +591,7 @@ pub fn explain_finding_tool() -> ToolDefinition {
         name: "explain_finding".into(),
         description: "Explain a finding for a given file/line range and technique.".into(),
         arguments: vec![
-            arg("technique_id", true, "Technique id (SAFE-T####).", "string"),
+            arg("technique_id", true, "Technique id (SAF-T####).", "string"),
             arg("file", true, "Path to file.", "string"),
             arg("start_line", true, "Start line of the finding.", "number"),
             arg("end_line", true, "End line of the finding.", "number"),
@@ -605,7 +605,7 @@ pub fn propose_mitigation_patch_tool() -> ToolDefinition {
         name: "propose_mitigation_patch".into(),
         description: "Optional placeholder: propose a mitigation patch for a finding.".into(),
         arguments: vec![
-            arg("technique_id", true, "Technique id (SAFE-T####).", "string"),
+            arg("technique_id", true, "Technique id (SAF-T####).", "string"),
             arg("file", true, "File to patch.", "string"),
             arg(
                 "patch_format",
@@ -647,7 +647,7 @@ pub struct ScanParams {
     pub repo_path: Option<String>,
     pub spec_dir: Option<String>,
     pub schema_path: Option<String>,
-    pub safe_mcp_root: Option<String>,
+    pub saf_mcp_root: Option<String>,
     pub scope: Option<String>,
     pub file: Option<String>,
     pub selection: Option<String>,
@@ -925,15 +925,15 @@ fn resolve_schema_path(override_path: Option<&str>) -> std::path::PathBuf {
         .unwrap_or_else(|| project_root().join("schemas").join("technique.schema.json"))
 }
 
-fn resolve_safe_mcp_root(override_path: Option<&str>) -> std::path::PathBuf {
+fn resolve_saf_mcp_root(override_path: Option<&str>) -> std::path::PathBuf {
     override_path
         .map(std::path::PathBuf::from)
         .or_else(|| {
-            std::env::var("SAFE_MCP_ROOT")
+            std::env::var("SAF_MCP_ROOT")
                 .ok()
                 .map(std::path::PathBuf::from)
         })
-        .unwrap_or_else(|| project_root().join("safe-mcp"))
+        .unwrap_or_else(|| project_root().join("saf-mcp"))
 }
 
 fn resolve_repo_path(params: &ScanParams) -> Result<std::path::PathBuf, McpError> {
@@ -1004,12 +1004,12 @@ output_schema:
         let mut pf = File::create(&prioritized_path).unwrap();
         writeln!(
             pf,
-            "| Technique ID | Name |\n| SAFE-T1002 | Second |\n| SAFE-T1001 | First |\n"
+            "| Technique ID | Name |\n| SAF-T1002 | Second |\n| SAF-T1001 | First |\n"
         )
         .unwrap();
 
         let items =
-            list_safe_mcp_techniques(&spec_dir, &schema_path, Some(&prioritized_path)).unwrap();
+            list_saf_mcp_techniques(&spec_dir, &schema_path, Some(&prioritized_path)).unwrap();
         let ids: Vec<_> = items.iter().map(|i| i.id.as_str()).collect();
         assert_eq!(ids, vec!["T1002", "T1001"]);
     }
@@ -1026,7 +1026,7 @@ output_schema:
             .join("technique.schema.json");
 
         write_spec(&spec_dir, "bad.yaml", "id: 1\n");
-        let err = list_safe_mcp_techniques(&spec_dir, &schema_path, None).unwrap_err();
+        let err = list_saf_mcp_techniques(&spec_dir, &schema_path, None).unwrap_err();
         assert!(err.contains("validation failed"));
     }
 
@@ -1062,25 +1062,25 @@ output_schema:
 "#;
         write_spec(&spec_dir, "t.yaml", t);
 
-        // SAFE-MCP corpus
-        let safe_root = dir.path().join("safe-mcp");
-        let tech_root = safe_root.join("techniques");
-        let mitigations_root = safe_root.join("mitigations");
+        // SAF-MCP corpus
+        let saf_root = dir.path().join("saf-mcp");
+        let tech_root = saf_root.join("techniques");
+        let mitigations_root = saf_root.join("mitigations");
         std::fs::create_dir_all(tech_root.join("T1001")).unwrap();
-        std::fs::create_dir_all(mitigations_root.join("SAFE-M-1")).unwrap();
+        std::fs::create_dir_all(mitigations_root.join("SAF-M-1")).unwrap();
         std::fs::write(tech_root.join("T1001/README.md"), "# T1001\nDetails").unwrap();
         std::fs::write(
-            safe_root.join("README.md"),
+            saf_root.join("README.md"),
             "| Tactic ID | Tactic Name | Technique ID | Technique Name | Description |\n|-----------|-------------|--------------|----------------|-------------|\n| ATK-TA0001 | Initial Access | T1001 | Technique | Desc |\n",
         )
         .unwrap();
         std::fs::write(
             tech_root.join("prioritized-techniques.md"),
-            "| Technique ID | Name |\n| SAFE-T1001 | Technique |\n",
+            "| Technique ID | Name |\n| SAF-T1001 | Technique |\n",
         )
         .unwrap();
         std::fs::write(
-            mitigations_root.join("SAFE-M-1/README.md"),
+            mitigations_root.join("SAF-M-1/README.md"),
             "# Mitigation\n",
         )
         .unwrap();
@@ -1095,7 +1095,7 @@ output_schema:
             repo_path: repo.clone(),
             spec_dir: spec_dir.clone(),
             schema_path: schema_path.clone(),
-            safe_mcp_root: safe_root.clone(),
+            saf_mcp_root: saf_root.clone(),
             scope: engine::chunk::ScopeKind::FullRepo,
             max_lines_per_chunk: 200,
             filters: None,
@@ -1131,7 +1131,7 @@ output_schema:
             repo_path: None,
             spec_dir: None,
             schema_path: None,
-            safe_mcp_root: None,
+            saf_mcp_root: None,
             scope: None,
             file: None,
             selection: None,
@@ -1192,7 +1192,7 @@ output_schema:
         let tools = mcp_tools();
         let names: Vec<String> = tools.iter().map(|t| t.name.to_string()).collect();
         for expected in [
-            "list_safe_mcp_techniques",
+            "list_saf_mcp_techniques",
             "scan_technique",
             "explain_finding",
             "propose_mitigation_patch",

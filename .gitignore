@@ -1,7 +1,7 @@
 /target
 **/target
 **/node_modules
-safe-mcp/
+saf-mcp/
 .DS_Store
 .env
 .env.local
