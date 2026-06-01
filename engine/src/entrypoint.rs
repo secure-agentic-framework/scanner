@@ -28,7 +28,7 @@ pub async fn analyze_technique<M: CodeModel>(
     spec_dir: &Path,
     schema_path: &Path,
     mitigations_dir: &Path,
-    safe_mcp_techniques_dir: &Path,
+    saf_mcp_techniques_dir: &Path,
     prioritized_path: &Path,
     readme_path: &Path,
     scope: ScopeKind,
@@ -86,7 +86,7 @@ pub async fn analyze_technique<M: CodeModel>(
         return Err(format!("failed to index mitigations: {msg}"));
     }
 
-    let readme_path = resolve_technique_readme(safe_mcp_techniques_dir, technique_id)?;
+    let readme_path = resolve_technique_readme(saf_mcp_techniques_dir, technique_id)?;
     let readme_excerpt = fs::read_to_string(&readme_path)
         .map_err(|e| format!("failed to read technique README {}: {e}", readme_path.display()))?;
 
@@ -101,7 +101,7 @@ pub async fn analyze_technique<M: CodeModel>(
     let analysis = build_analysis_result(technique_id, merged, files_scanned, chunks_analyzed)
         .map_err(|e| format!("analysis error: {e}"))?;
 
-    let cross_check = cross_check_readme_vs_dir(&readme.techniques, safe_mcp_techniques_dir);
+    let cross_check = cross_check_readme_vs_dir(&readme.techniques, saf_mcp_techniques_dir);
     if !cross_check.errors.is_empty() {
         let msg = cross_check.errors.join("; ");
         return Err(format!("failed to enumerate techniques directory: {msg}"));
@@ -129,10 +129,10 @@ fn resolve_technique_readme(
     let candidates = [
         techniques_root.join(technique_id).join("README.md"),
         techniques_root
-            .join(format!("SAFE-{technique_id}"))
+            .join(format!("SAF-{technique_id}"))
             .join("README.md"),
         techniques_root
-            .join(format!("SAFE-{}", technique_id.trim_start_matches("SAFE-")))
+            .join(format!("SAF-{}", technique_id.trim_start_matches("SAF-")))
             .join("README.md"),
     ];
     for p in candidates {
@@ -141,10 +141,10 @@ fn resolve_technique_readme(
         }
     }
     Err(format!(
-        "technique README not found for {} under {} (tried {} and SAFE-{})",
+        "technique README not found for {} under {} (tried {} and SAF-{})",
         technique_id,
         techniques_root.display(),
         techniques_root.join(technique_id).display(),
-        techniques_root.join(format!("SAFE-{technique_id}")).display()
+        techniques_root.join(format!("SAF-{technique_id}")).display()
     ))
 }

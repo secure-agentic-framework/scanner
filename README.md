@@ -1,6 +1,6 @@
-# SAFE-MCP Scanner
+# SAF-MCP Scanner
 
-Rust workspace that scans repositories for SAFE-MCP techniques. It ships a CLI (`safe-mcp-scan`) and an MCP server (`safe-mcp-analyzer`) that call the shared engine.
+Rust workspace that scans repositories for SAF-MCP techniques. It ships a CLI (`saf-mcp-scan`) and an MCP server (`saf-mcp-analyzer`) that call the shared engine.
 
 ## Quick Start
 - Prereqs: Rust stable, provider key in config or env (OpenAI/Anthropic), and `schemas/technique.schema.json` path if running outside the repo root.
@@ -11,12 +11,12 @@ Rust workspace that scans repositories for SAFE-MCP techniques. It ships a CLI (
     --schema $(pwd)/schemas/technique.schema.json \
     --json [--llm-review]
   ```
-- MCP server: `cargo run -p server --bin safe-mcp-analyzer` (configure providers/filters in YAML/JSON).
+- MCP server: `cargo run -p server --bin saf-mcp-analyzer` (configure providers/filters in YAML/JSON).
 - Batch scans: `./run_scans.sh` runs all specs under `techniques/`, continues on failures, writes `scan_outputs/*.json`.
 
 ## Data & Inputs
 - Specs: active techniques in `techniques/` (top set), additional specs in `techniques_backup/`.
-- SAFE-MCP corpus (gitignored): `safe-mcp/README.md`, `safe-mcp/techniques/<ID>/README.md`, `safe-mcp/techniques/prioritized-techniques.md`, mitigations under `safe-mcp/mitigations/`.
+- SAF-MCP corpus (gitignored): `saf-mcp/README.md`, `saf-mcp/techniques/<ID>/README.md`, `saf-mcp/techniques/prioritized-techniques.md`, mitigations under `saf-mcp/mitigations/`.
 - Schema: `schemas/technique.schema.json` (pass `--schema` when running outside repo root).
 
 ## Behavior Highlights
@@ -27,4 +27,4 @@ Rust workspace that scans repositories for SAFE-MCP techniques. It ships a CLI (
 
 ## Contributing
 - See `AGENTS.md` for contributor workflow, commands to run, and coding/testing conventions.
-- License: Apache 2.0 (see `LICENSE`). Don't commit changes to `safe-mcp/` corpus.
+- License: Apache 2.0 (see `LICENSE`). Don't commit changes to `saf-mcp/` corpus.

@@ -12,11 +12,11 @@ use reqwest::StatusCode;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "safe-mcp-scan",
-    about = "Run SAFE-MCP technique scans against a repo"
+    name = "saf-mcp-scan",
+    about = "Run SAF-MCP technique scans against a repo"
 )]
 struct Args {
-    /// Technique ID to scan (e.g., SAFE-T1001)
+    /// Technique ID to scan (e.g., SAF-T1001)
     technique_id: String,
     /// Path to repository to scan
     #[arg(long, default_value = ".")]
@@ -27,9 +27,9 @@ struct Args {
     /// Path to technique JSON schema
     #[arg(long, default_value = "schemas/technique.schema.json")]
     schema: PathBuf,
-    /// Path to SAFE-MCP corpus root (with techniques/, mitigations/, README.md)
-    #[arg(long, default_value = "safe-mcp")]
-    safe_mcp: PathBuf,
+    /// Path to SAF-MCP corpus root (with techniques/, mitigations/, README.md)
+    #[arg(long, default_value = "saf-mcp")]
+    saf_mcp: PathBuf,
     /// Max lines per chunk
     #[arg(long, default_value_t = 200)]
     max_lines_per_chunk: usize,
@@ -141,10 +141,10 @@ async fn run(args: Args) -> Result<i32, String> {
     let scope = build_scope(&args)?;
     let cfg = load_config(args.config.as_deref()).map_err(|e| format!("config error: {e}"))?;
 
-    let safe_mcp_techniques = args.safe_mcp.join("techniques");
-    let mitigations_dir = args.safe_mcp.join("mitigations");
-    let prioritized_path = safe_mcp_techniques.join("prioritized-techniques.md");
-    let readme_path = args.safe_mcp.join("README.md");
+    let saf_mcp_techniques = args.saf_mcp.join("techniques");
+    let mitigations_dir = args.saf_mcp.join("mitigations");
+    let prioritized_path = saf_mcp_techniques.join("prioritized-techniques.md");
+    let readme_path = args.saf_mcp.join("README.md");
     let cli_max_provided = args.max_file_bytes.is_some();
     let filters = build_filters(&args);
     let filters = merge_filters_with_config(filters, &cfg, cli_max_provided);
@@ -157,7 +157,7 @@ async fn run(args: Args) -> Result<i32, String> {
         &args.spec_dir,
         &args.schema,
         &mitigations_dir,
-        &safe_mcp_techniques,
+        &saf_mcp_techniques,
         &prioritized_path,
         &readme_path,
         scope,
